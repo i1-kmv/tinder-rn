@@ -58,7 +58,7 @@ export const HomeScreen = () => {
                     />
                 </TouchableOpacity>
 
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('Modal')}>
                     <Image
                         style={tw('h-14 w-14 rounded-full')}
                         source={require("../logo.png")}
