@@ -12,7 +12,7 @@ import useAuth from "../hooks/useAuth";
 import tw from "tailwind-rn";
 import {AntDesign, Entypo, Ionicons} from "@expo/vector-icons";
 import Swiper from "react-native-deck-swiper";
-import {doc, onSnapshot, collection} from "firebase/firestore"
+import {doc, onSnapshot, collection, setDoc, getDocs, where, query} from "firebase/firestore"
 import {db} from "../firebase";
 
 const DUMMY_DATA = [
@@ -64,7 +64,17 @@ export const HomeScreen = () => {
         let unsub
 
         const fetchCards = async () => {
-            unsub = onSnapshot(collection(db, 'users'), snapshot => {
+
+            const passes = await getDocs(collection(db, 'users', user.uid, 'passes')).then
+            (snapshot => snapshot.docs.map(doc => doc.id))
+
+            const swipes = await getDocs(collection(db, 'users', user.uid, 'passes')).then
+            (snapshot => snapshot.docs.map(doc => doc.id))
+
+            const passedUserIds = passes.length > 0 ? passes : ['test']
+            const swipedUserIds = swipes.length > 0 ? swipes : ['test']
+
+            unsub = onSnapshot(query(collection(db, 'users'), where('id', 'not-in', [...passedUserIds, ...swipedUserIds])), snapshot => {
                 setProfiles(snapshot.docs.filter(doc => doc.id !== user.uid).map((doc) => ({
                     id: doc.id,
                     ...doc.data()
@@ -74,7 +84,22 @@ export const HomeScreen = () => {
 
         fetchCards()
         return unsub
-    }, [])
+    }, [db])
+
+    const swipeLeft = (cardIndex) => {
+        if (!profiles[cardIndex]) return
+
+        const userSwiped = profiles[cardIndex]
+        setDoc(doc(db, 'users', user.uid, 'passes', userSwiped.id), userSwiped)
+
+    }
+
+    const swipeRight = async(cardIndex) => {
+        if (!profiles[cardIndex]) return
+
+        const userSwiped = profiles[cardIndex]
+        setDoc(doc(db, 'users', user.uid, 'passes', userSwiped.id), userSwiped)
+    }
 
     return (
         <SafeAreaView style={tw('pt-7 flex-1')}>
@@ -107,11 +132,13 @@ export const HomeScreen = () => {
                     cardIndex={0}
                     animateCardOpacity
                     verticalSwipe={false}
-                    onSwipedLeft={() => {
+                    onSwipedLeft={(cardIndex) => {
                         console.log('left')
+                        swipeLeft(cardIndex)
                     }}
-                    onSwipedRight={() => {
+                    onSwipedRight={(cardIndex) => {
                         console.log('right')
+                        swipeRight(cardIndex)
                     }}
                     overlayLabels={{
                         left: {
