@@ -12,8 +12,10 @@ import useAuth from "../hooks/useAuth";
 import tw from "tailwind-rn";
 import {AntDesign, Entypo, Ionicons} from "@expo/vector-icons";
 import Swiper from "react-native-deck-swiper";
-import {doc, onSnapshot, collection, setDoc, getDocs, where, query} from "firebase/firestore"
+import {doc, onSnapshot, collection, setDoc, getDoc, getDocs, where, query, serverTimestamp} from "firebase/firestore"
 import {db} from "../firebase";
+import generateId from "../lib/generateid";
+
 
 const DUMMY_DATA = [
     {
@@ -53,12 +55,12 @@ export const HomeScreen = () => {
 
     useLayoutEffect(
         () =>
-          onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
+            onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
                 if (!snapshot.exists()) {
                     navigation.navigate('Modal')
                 }
             }),
-     [])
+        [])
 
     useEffect(() => {
         let unsub
@@ -94,11 +96,37 @@ export const HomeScreen = () => {
 
     }
 
-    const swipeRight = async(cardIndex) => {
+    const swipeRight = async (cardIndex) => {
         if (!profiles[cardIndex]) return
 
         const userSwiped = profiles[cardIndex]
-        setDoc(doc(db, 'users', user.uid, 'passes', userSwiped.id), userSwiped)
+        const LoggedInUserProfile = await (await getDoc(db, 'users', user.uid)).data()
+
+        getDoc(doc(db, "users", userSwiped.id, 'swipes', user.uid)).then(documentSnapshot => {
+            if (documentSnapshot.exists()) {
+                setDoc(doc(db, 'users', user.uid, 'passes', userSwiped.id), userSwiped)
+
+                setDoc(doc(db, 'matches', generateId(user.uid, userSwiped.id)), {
+                    users: {
+                        [user.uid]: loggedInProfile,
+                        [userSwiped.id]: userSwiped
+                    },
+                    usersMatched: [user.uid, userSwiped.id],
+                    timestamp: serverTimestamp()
+                })
+
+                navigation.navigate('Match', {
+                    loggedInProfile,
+                    userSwiped
+                })
+            } else {
+
+            }
+
+            setDoc(doc(db, 'users', user.uid, 'passes', userSwiped.id), userSwiped)
+        })
+
+
     }
 
     return (
@@ -144,10 +172,10 @@ export const HomeScreen = () => {
                         left: {
                             title: "Не нравится",
                             style: {
-                               label: {
-                                   textAlign: "right",
-                                   color: 'red'
-                               }
+                                label: {
+                                    textAlign: "right",
+                                    color: 'red'
+                                }
                             }
                         },
                         right: {
@@ -169,7 +197,8 @@ export const HomeScreen = () => {
                                 source={{uri: card.photoURL}}
                             />
 
-                            <View style={[tw("bg-white w-full h-20 px-6 py-2 rounded-b-xl absolute bottom-0 flex-row justify-between items-center"), styles.cardShadow]}>
+                            <View
+                                style={[tw("bg-white w-full h-20 px-6 py-2 rounded-b-xl absolute bottom-0 flex-row justify-between items-center"), styles.cardShadow]}>
                                 <View>
                                     <Text style={tw("text-xl font-bold")}>
                                         {card.firstName}
