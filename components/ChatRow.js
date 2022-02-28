@@ -2,10 +2,10 @@ import React from "react";
 import {View, Text, SafeAreaView} from "react-native";
 
 
-export const ChatScreen = () => {
+export const ChatRow = () => {
     return (
-       <SafeAreaView>
-           
-       </SafeAreaView>
+        <SafeAreaView>
+
+        </SafeAreaView>
     )
 }
