@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {TouchableOpacity, Image} from "react-native";
+import {TouchableOpacity, Image, View, Text} from "react-native";
 import {useNavigation} from "@react-navigation/native";
 import useAuth from "../hooks/useAuth";
 import getMatchedUserInfo from "../lib/getMatchedUserinfo";
@@ -17,11 +17,25 @@ export const ChatRow = ({matchDetails}) => {
     },[matchDetails, user])
 
     return (
-        <TouchableOpacity style={tw('flex-row items-center py-3 px-5 bg-white mx-3 my-1 rounded-lg')}>
+        <TouchableOpacity
+            style={tw('flex-row items-center py-3 px-5 bg-white mx-3 my-1 rounded-lg')}
+            onPress={() => navigation.navigate('Message', {
+
+            })}
+        >
             <Image
                 style={tw('rounded-full h-16 w-16 mr-4')}
                 source={{uri:matchedUserInfo?.photoURL}}
             />
+
+            <View>
+                <Text style={tw('text-lg font-semibold')}>
+                    {matchedUserInfo?.displayName}
+                </Text>
+                <Text>
+                    Say hi!
+                </Text>
+            </View>
         </TouchableOpacity>
     )
 }
